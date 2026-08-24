@@ -859,14 +859,9 @@ footer.closing{
   }
   if(overlay){
     document.body.classList.add('locked');
-    if(reduced){
-      overlay.classList.add('hidden');
-      document.body.classList.remove('locked');
-    } else {
-      overlay.addEventListener('click', function(){
-        if(!videoStarted){ startOpening(); } else if(sequenceStarted){ finish(); }
-      });
-    }
+    overlay.addEventListener('click', function(){
+      if(!videoStarted){ startOpening(); } else if(sequenceStarted){ finish(); }
+    });
   }
 
   var items = document.querySelectorAll('.reveal');
