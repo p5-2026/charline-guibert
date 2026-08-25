@@ -154,6 +154,33 @@ h1,h2,h3,.script{
 #envelope-overlay.see-through{background:transparent;}
 body.locked{overflow:hidden; height:100vh;}
 .intro-video{position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:block; background:#f1dade; transition:opacity .6s ease;}
+.envelope-tap-hint{
+  position:absolute; left:0; right:0; bottom:10%; text-align:center; z-index:3;
+  font-family:'Alex Brush',cursive; letter-spacing:.02em;
+  font-size:clamp(1.5rem,5vw,2rem); font-weight:400; color:#7d4356; opacity:.85;
+  animation:hintPulse 2.4s ease-in-out infinite; padding:0 20px;
+}
+@keyframes hintPulse{0%,100%{opacity:.4;}50%{opacity:.85;}}
+.reveal-stage{position:absolute; inset:0; opacity:0; transition:opacity 1s ease;}
+.reveal-stage.active{opacity:1;}
+.reveal-light{
+  position:absolute; inset:0;
+  background:var(--cream);
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+}
+.calligraphy-big{width:min(84vw,420px); height:110px; overflow:visible; display:block;}
+.calligraphy-big text{
+  font-family:'Alex Brush',cursive; font-size:52px; fill:var(--rose-ink);
+  clip-path:inset(0 100% 0 0); transition:clip-path 2.1s ease;
+}
+.reveal-light.write .calligraphy-big text{clip-path:inset(0 0% 0 0);}
+.calligraphy-heart{width:52px; height:48px; display:block; margin:14px auto 0; overflow:visible;}
+.calligraphy-heart path{
+  fill:none; stroke:var(--rose-deep); stroke-width:3; stroke-linecap:round; stroke-linejoin:round;
+  stroke-dasharray:220; stroke-dashoffset:220; opacity:0;
+  transition:stroke-dashoffset 1.3s ease 1.9s, opacity .3s ease 1.9s;
+}
+.reveal-light.write .calligraphy-heart path{stroke-dashoffset:0; opacity:1;}
 .envelope-wrap{position:relative; transition:opacity .8s ease;}
 .envelope-wrap.dissolve{opacity:0;}
 .envelope{
@@ -550,6 +577,18 @@ footer.closing{
 
 <div id="envelope-overlay">
   <video class="intro-video" id="introVideo" src="assets/envelope.mp4" poster="assets/envelope-closed.jpg" muted playsinline preload="auto"></video>
+  <div class="envelope-tap-hint" id="tapHint">Ouvrez votre invitation</div>
+
+  <div class="reveal-stage" id="revealStage">
+    <div class="reveal-light" id="revealLight">
+      <svg class="calligraphy-big" viewBox="0 0 400 90" aria-hidden="true">
+        <text x="200" y="60" text-anchor="middle">Guibou &amp; Chachou</text>
+      </svg>
+      <svg class="calligraphy-heart" viewBox="0 0 64 58" aria-hidden="true">
+        <path d="M32 52 C10 36 2 24 2 14 C2 5 10 -1 18 3 C24 6 28 10 32 16 C36 10 40 6 46 3 C54 -1 62 5 62 14 C62 24 54 36 32 52 Z"/>
+      </svg>
+    </div>
+  </div>
 </div>
 
 <main>
@@ -761,7 +800,10 @@ footer.closing{
 
   var overlay = document.getElementById('envelope-overlay');
   var introVideo = document.getElementById('introVideo');
-  var opening = false, videoStarted = false;
+  var tapHint = document.getElementById('tapHint');
+  var revealStage = document.getElementById('revealStage');
+  var revealLight = document.getElementById('revealLight');
+  var opening = false, videoStarted = false, sequenceStarted = false;
 
   function finish(){
     if(opening) return;
@@ -769,17 +811,25 @@ footer.closing{
     document.body.classList.remove('locked');
     overlay.classList.add('hidden');
   }
+  function runSequence(){
+    if(sequenceStarted) return;
+    sequenceStarted = true;
+    setTimeout(function(){ revealStage.classList.add('active'); }, 100);
+    setTimeout(function(){ revealLight.classList.add('write'); }, 400);
+    setTimeout(finish, 4400);
+  }
   function startOpening(){
     if(videoStarted) return;
     videoStarted = true;
+    if(tapHint){ tapHint.style.display = 'none'; }
     if(introVideo){
       introVideo.currentTime = 0;
-      introVideo.addEventListener('ended', finish);
-      introVideo.addEventListener('error', finish);
-      introVideo.play().catch(finish);
-      setTimeout(finish, 7000);
+      introVideo.addEventListener('ended', runSequence);
+      introVideo.addEventListener('error', runSequence);
+      introVideo.play().catch(runSequence);
+      setTimeout(runSequence, 7000);
     } else {
-      finish();
+      runSequence();
     }
   }
   if(overlay){
